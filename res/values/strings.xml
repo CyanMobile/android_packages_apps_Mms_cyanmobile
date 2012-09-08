@@ -923,5 +923,6 @@
 
     <string name="put_contacts">Contacts</string>
     <string name="quick_reply_sending">Sending...</string>
+    <string name="quick_reader">Mark as read success!</string>
 </resources>
 

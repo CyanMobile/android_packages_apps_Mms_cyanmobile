@@ -301,6 +301,10 @@
             android:excludeFromRecents="true" >
         </activity>
 
+        <activity android:name=".ui.QuickReader"
+            android:excludeFromRecents="true" >
+        </activity>
+
         <service android:name=".ui.NoConfirmationSendService"
                  android:exported="true" >
             <intent-filter>
