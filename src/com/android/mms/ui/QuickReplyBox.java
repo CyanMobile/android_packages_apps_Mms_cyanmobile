@@ -2,19 +2,26 @@ package com.android.mms.ui;
 
 import com.android.mms.R;
 import com.android.mms.data.Conversation;
+import com.android.mms.util.EmojiParser;
+import com.android.mms.util.SmileyParser;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnDismissListener;
 import android.content.Intent;
 import android.content.ContentValues;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.SystemClock;
 import android.os.Handler;
+import android.os.SystemClock;
+import android.preference.PreferenceManager;
 import android.telephony.SmsManager;
+import android.text.SpannableStringBuilder;
+import android.text.TextUtils;
 import android.view.inputmethod.InputMethodManager;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -23,14 +30,15 @@ import android.widget.EditText;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.app.NotificationManager;
 
 public class QuickReplyBox extends Activity implements OnDismissListener, OnClickListener {
 
     private boolean keysAreShowing;
     private TextView mNameLabel;
+    private TextView mSmsBody;
     private String mPhoneNumber;
     private String mContactName;
+    private String mSmsMessage;
     private Button mSendSmsButton;
     private EditText mEditBox;
     private Context mContext;
@@ -47,9 +55,12 @@ public class QuickReplyBox extends Activity implements OnDismissListener, OnClic
         Bundle extras = getIntent().getExtras();
         mPhoneNumber = extras.getString("numbers");
         mContactName = extras.getString("name");
+        mSmsMessage = extras.getString("inmessage");
         messageId = extras.getLong("id");
         mNameLabel = (TextView) mView.findViewById(R.id.name_label);
         mNameLabel.setText(mContactName);
+        mSmsBody = (TextView) mView.findViewById(R.id.smsmessagein);
+        mSmsBody.setText(replaceWithEmotes(mSmsMessage));
         mSendSmsButton = (Button) mView.findViewById(R.id.send_sms_button);
         mSendSmsButton.setOnClickListener(this);
         mEditBox = (EditText) mView.findViewById(R.id.edit_box);
@@ -62,6 +73,24 @@ public class QuickReplyBox extends Activity implements OnDismissListener, OnClic
     public void onDestroy() {
         finish();
         super.onDestroy();
+    }
+
+    private CharSequence replaceWithEmotes(String body) {
+        SpannableStringBuilder buf = new SpannableStringBuilder();
+        SharedPreferences prefs = PreferenceManager
+                .getDefaultSharedPreferences(getApplicationContext());
+        boolean enableEmojis = prefs.getBoolean(MessagingPreferenceActivity.ENABLE_EMOJIS, false);
+
+        if (!TextUtils.isEmpty(body)) {
+            SmileyParser parser = SmileyParser.getInstance();
+            CharSequence smileyBody = parser.addSmileySpans(body);
+            if (enableEmojis) {
+                EmojiParser emojiParser = EmojiParser.getInstance();
+                smileyBody = emojiParser.addEmojiSpans(smileyBody);
+            }
+            buf.append(smileyBody);
+        }
+        return buf;
     }
 
     @Override
@@ -80,7 +109,7 @@ public class QuickReplyBox extends Activity implements OnDismissListener, OnClic
                 public void run() {
                   finish();
                 }
-            },250);
+            }, 300);
         } else if (v == mEditBox) {
             imm.showSoftInput(mEditBox, 0);
             keysAreShowing = true;
@@ -101,7 +130,7 @@ public class QuickReplyBox extends Activity implements OnDismissListener, OnClic
     }
 
     private void setRead() {
-        Conversation.markAllConversationsAsSeen(getApplicationContext(),true);
+        Conversation.markAllConversationsAsSeen(getApplicationContext(), true);
         NotificationManager nm = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
         nm.cancel(123);
     }
@@ -134,6 +163,8 @@ public class QuickReplyBox extends Activity implements OnDismissListener, OnClic
                 
                 mNameLabel = (TextView) mView.findViewById(R.id.name_label);
                 mNameLabel.setText(mContactName);
+                mSmsBody = (TextView) mView.findViewById(R.id.smsmessagein);
+                mSmsBody.setText(replaceWithEmotes(mSmsMessage));
                 mSendSmsButton = (Button) mView.findViewById(R.id.send_sms_button);
                 mSendSmsButton.setOnClickListener(QuickReplyBox.this);
                 mEditBox = (EditText) mView.findViewById(R.id.edit_box);

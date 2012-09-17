@@ -20,6 +20,42 @@
       android:layout_width="fill_parent"
       android:layout_weight="1" />
   </LinearLayout>
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dip"
+        android:background="@drawable/text_color_green"
+        android:paddingBottom="4dp"
+        android:paddingTop="4dp" />
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_gravity="center"
+        android:layout_weight="1"
+        android:fillViewport="true"
+        android:minHeight="72dp"
+        android:paddingTop="4dp"
+        android:background="#fff3f3f3"
+        android:paddingBottom="4dp" >
+
+        <TextView android:id="@+id/smsmessagein"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="72dp"
+            android:autoLink="all"
+            android:gravity="center"
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:textSize="16sp"
+            android:textColor="?android:attr/textColorPrimaryInverse"
+            android:textColorLink="?android:attr/textColorPrimaryInverse" />
+    </ScrollView>
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dip"
+        android:background="@drawable/text_color_green"
+        android:paddingBottom="4dp"
+        android:paddingTop="4dp" />
   <LinearLayout
     android:orientation="horizontal"
     android:layout_width="fill_parent"
