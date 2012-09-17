@@ -13,7 +13,11 @@ import android.content.DialogInterface;
 import android.content.DialogInterface.OnDismissListener;
 import android.content.Intent;
 import android.content.ContentValues;
+import android.content.res.Resources;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -26,19 +30,24 @@ import android.view.inputmethod.InputMethodManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.widget.EditText;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 public class QuickReplyBox extends Activity implements OnDismissListener, OnClickListener {
 
+    private Bitmap avatar;
     private boolean keysAreShowing;
+    private ImageView contactIcon;
     private TextView mNameLabel;
     private TextView mSmsBody;
+    private TextView mSmsDate;
     private String mPhoneNumber;
     private String mContactName;
     private String mSmsMessage;
+    private String mSmsDateIn;
     private Button mSendSmsButton;
     private EditText mEditBox;
     private Context mContext;
@@ -53,12 +62,20 @@ public class QuickReplyBox extends Activity implements OnDismissListener, OnClic
         AlertDialog alert = new AlertDialog.Builder(this).setView(mView).create();
 
         Bundle extras = getIntent().getExtras();
+        avatar = (Bitmap) extras.get("avatars");
         mPhoneNumber = extras.getString("numbers");
-        mContactName = extras.getString("name");
+        mContactName = extras.getString("names");
         mSmsMessage = extras.getString("inmessage");
+        mSmsDateIn = extras.getString("indate");
         messageId = extras.getLong("id");
+        contactIcon = (ImageView) mView.findViewById(R.id.name_labelpicture);
+        if (avatar != null) {
+            contactIcon.setImageBitmap(avatar);
+        }
         mNameLabel = (TextView) mView.findViewById(R.id.name_label);
         mNameLabel.setText(mContactName);
+        mSmsDate = (TextView) mView.findViewById(R.id.smstimein);
+        mSmsDate.setText(mSmsDateIn);
         mSmsBody = (TextView) mView.findViewById(R.id.smsmessagein);
         mSmsBody.setText(replaceWithEmotes(mSmsMessage));
         mSendSmsButton = (Button) mView.findViewById(R.id.send_sms_button);
@@ -160,9 +177,15 @@ public class QuickReplyBox extends Activity implements OnDismissListener, OnClic
             	LayoutInflater inflater = LayoutInflater.from(QuickReplyBox.this);
                 final View mView = inflater.inflate(R.layout.quick_reply_box, null);
                 AlertDialog alert = new AlertDialog.Builder(QuickReplyBox.this).setView(mView).create();
-                
+
+                contactIcon = (ImageView) mView.findViewById(R.id.name_labelpicture);
+                if (avatar != null) {
+                    contactIcon.setImageBitmap(avatar);
+                }
                 mNameLabel = (TextView) mView.findViewById(R.id.name_label);
                 mNameLabel.setText(mContactName);
+                mSmsDate = (TextView) mView.findViewById(R.id.smstimein);
+                mSmsDate.setText(mSmsDateIn);
                 mSmsBody = (TextView) mView.findViewById(R.id.smsmessagein);
                 mSmsBody.setText(replaceWithEmotes(mSmsMessage));
                 mSendSmsButton = (Button) mView.findViewById(R.id.send_sms_button);
