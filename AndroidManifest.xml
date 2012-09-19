@@ -54,7 +54,7 @@
             android:label="@string/app_label"
             android:icon="@drawable/ic_launcher_smsmms"
             android:taskAffinity="android.task.mms"
-            android:allowTaskReparenting="true" android:theme="@style/CustomTheme">
+            android:allowTaskReparenting="true">
 
         <service android:name=".transaction.TransactionService"
                  android:exported="true" />
@@ -64,6 +64,7 @@
 
         <activity android:name=".ui.ConversationList"
                   android:label="@string/app_label"
+                  android:theme="@style/CustomTheme"
                   android:configChanges="orientation|keyboardHidden"
                   android:launchMode="singleTop">
             <intent-filter>
