@@ -50,10 +50,11 @@ public class MessageStatusReceiver extends BroadcastReceiver {
 
             SmsMessage message = updateMessageStatus(context, messageUri, pdu);
 
-            // Called on the UI thread so don't block.
-            if (message.getStatus() < Sms.STATUS_PENDING)
-                MessagingNotification.nonBlockingUpdateNewMessageIndicator(context,
-                        true, message.isStatusReportMessage());
+           // Called on a background thread, so it's OK to block.
+           if (message != null && message.getStatus() < Sms.STATUS_PENDING) {
+               MessagingNotification.blockingUpdateNewMessageIndicator(context,
+                   MessagingNotification.THREAD_NONE, message.isStatusReportMessage());
+           }
        }
     }
 

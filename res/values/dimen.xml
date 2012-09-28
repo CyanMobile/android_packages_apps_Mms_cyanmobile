@@ -19,4 +19,9 @@
     <dimen name="color_picker_radius">30dip</dimen>
     <dimen name="actionbar_height">45dip</dimen>
     <dimen name="padding_small">10dip</dimen>
+
+    <dimen name="widget_margin_top">0dip</dimen>
+    <dimen name="widget_margin_left">0dip</dimen>
+    <dimen name="widget_margin_right">0dip</dimen>
+    <dimen name="widget_margin_bottom">0dip</dimen>
 </resources>

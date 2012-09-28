@@ -30,4 +30,9 @@
 		<item name="android:windowTitleSize">45dip</item>
 		<item name="android:windowTitleBackgroundStyle">@style/customWindowTitleBackground</item>
 	</style>
+
+    <style name="WidgetTitle" parent="@android:style/TextAppearance.Widget">
+        <item name="android:textColor">#333333</item>
+        <item name="android:singleLine">true</item>
+    </style>
 </resources>
