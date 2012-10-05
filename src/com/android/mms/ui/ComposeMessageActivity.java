@@ -349,6 +349,13 @@ public class ComposeMessageActivity extends Activity
     private TemplatesDb mTemplatesDb;
     private String[] mTemplatesText;
 
+    // Add SMS to calendar remind
+    private static final String CALENDAR_EVENT_TYPE = "vnd.android.cursor.item/event";
+    private static final String CALENDAR_EVENT_TTTLE = "title";
+    private static final String CALENDAR_EVENT_BEGIN_TIME = "beginTime";
+    private static final String CALENDAR_EVENT_END_TIME = "endTime";
+    private static final String CALENDAR_EVENT_DESCRIPTION= "description";
+
     //Pick-Up-To-Call
     private EarDetector mEarDetector;
 
@@ -1244,14 +1251,14 @@ public class ComposeMessageActivity extends Activity
     }
 
     private void addToCalendarRemind(String subject, String description ) {
-        Intent calendarIntent = new Intent(Intent.ACTION_EDIT);
+        Intent calendarIntent = new Intent(Intent.ACTION_INSERT);
         Calendar calTime = Calendar.getInstance();
-        calendarIntent.setType("vnd.android.cursor.item/event");
-        calendarIntent.putExtra("title", subject);
-        calendarIntent.putExtra("beginTime", calTime.getTimeInMillis());
+        calendarIntent.setType(CALENDAR_EVENT_TYPE);
+        calendarIntent.putExtra(CALENDAR_EVENT_TTTLE, subject);
+        calendarIntent.putExtra(CALENDAR_EVENT_BEGIN_TIME, calTime.getTimeInMillis());
         calTime.add(Calendar.MINUTE, 30);
-        calendarIntent.putExtra("endTime", calTime.getTimeInMillis());
-        calendarIntent.putExtra("description", description);
+        calendarIntent.putExtra(CALENDAR_EVENT_END_TIME, calTime.getTimeInMillis());
+        calendarIntent.putExtra(CALENDAR_EVENT_DESCRIPTION, description);
         startActivity(calendarIntent);
     }
 
@@ -1397,7 +1404,11 @@ public class ComposeMessageActivity extends Activity
                 }
 
                 case MENU_ADD_TO_CALENDAR: {
-                    addToCalendarRemind(msgItem.mBody, msgItem.mSubject);
+                    if (msgItem.mSubject != null) {
+                        addToCalendarRemind(msgItem.mSubject, msgItem.mBody);
+                    } else {
+                        addToCalendarRemind(msgItem.mBody, msgItem.mSubject);
+                    }
                     return true;
                 }
 
