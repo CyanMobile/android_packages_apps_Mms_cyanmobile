@@ -10,7 +10,7 @@
 		android:layout_width="@dimen/actionbar_height" android:layout_height="@dimen/actionbar_height"
 		android:layout_alignParentRight="true" android:layout_centerVertical="true"
 		android:layout_margin="0dp" android:padding="0dp"
-		android:background="@color/actionbar_separator" />
+		android:background="@*android:color/transparent" />
 	<ProgressBar android:id="@+id/actionbar_progress"
 		android:layout_width="@dimen/actionbar_height" android:layout_height="@dimen/actionbar_height"
 		android:layout_toLeftOf="@id/actionbar_actionIcons"
