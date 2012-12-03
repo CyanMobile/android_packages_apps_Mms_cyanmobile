@@ -18,25 +18,6 @@
 
 <resources xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-  <string-array name="default_smiley_texts">
-    <item>":-)"</item>
-    <item>":-("</item>
-    <item>";-)"</item>
-    <item>":-P"</item>
-    <item>"=-O"</item>
-    <item>":-*"</item>
-    <item>":O"</item>
-    <item>"B-)"</item>
-    <item>":-$"</item>
-    <item>":-!"</item>
-    <item>":-["</item>
-    <item>"O:-)"</item>
-    <item>":-\\"</item>
-    <item>":\'("</item>
-    <item>":-X"</item>
-    <item>":-D"</item>
-    <item>"o_O"</item>
-  </string-array>
   <string-array name="default_smiley_names">
     <item>Радостный</item>
     <item>Грустный</item>
@@ -55,6 +36,10 @@
     <item>Рот на замке</item>
     <item>Смеющийся</item>
     <item>Озадаченный</item>
+    <item>"Сердце"</item>
+    <item>"Злой"</item>
+    <item>"Ухмылка"</item>
+    <item>"Невозмутимость"</item>
   </string-array>
   <string-array name="pref_mms_user_agent_entries">
     <item>Android (по умолчанию)</item>
