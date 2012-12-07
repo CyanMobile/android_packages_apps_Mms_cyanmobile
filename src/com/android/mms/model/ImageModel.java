@@ -26,6 +26,8 @@ import android.drm.mobile1.DrmException;
 import com.android.mms.drm.DrmWrapper;
 import com.android.mms.ui.UriImage;
 import com.android.mms.ui.MessageUtils;
+
+import com.google.android.mms.ContentType;
 import com.google.android.mms.MmsException;
 import com.google.android.mms.pdu.PduPart;
 import com.google.android.mms.pdu.PduPersister;
@@ -45,14 +47,27 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.SoftReference;
+import java.util.Arrays;	
+import java.util.HashSet;
+import java.util.Set;
 
 
 public class ImageModel extends RegionMediaModel {
+    @SuppressWarnings("hiding")
     private static final String TAG = "Mms/image";
     private static final boolean DEBUG = false;
     private static final boolean LOCAL_LOGV = DEBUG ? Config.LOGD : Config.LOGV;
 
     private static final int THUMBNAIL_BOUNDS_LIMIT = 480;
+
+    /**
+     * These are the image content types that MMS supports. Anything else needs to be transcoded
+     * into one of these content types before being sent over MMS.
+     */
+    private static final Set<String> SUPPORTED_MMS_IMAGE_CONTENT_TYPES =
+        new HashSet<String>(Arrays.asList(new String[] {
+                "image/jpeg",
+            }));
 
     private int mWidth;
     private int mHeight;
@@ -108,6 +123,7 @@ public class ImageModel extends RegionMediaModel {
     }
 
     // EventListener Interface
+    @Override
     public void handleEvent(Event evt) {
         if (evt.getType().equals(SmilMediaElementImpl.SMIL_MEDIA_START_EVENT)) {
             mVisible = true;
@@ -200,18 +216,37 @@ public class ImageModel extends RegionMediaModel {
     @Override
     protected void resizeMedia(int byteLimit, long messageId) throws MmsException {
         UriImage image = new UriImage(mContext, getUri());
-        if (image == null) {
-            throw new ExceedMessageSizeException("No room to resize picture: " + getUri());
+        int widthLimit = MmsConfig.getMaxImageWidth();
+        int heightLimit = MmsConfig.getMaxImageHeight();
+        // In mms_config.xml, the max width has always been declared larger than the max height.
+        // Swap the width and height limits if necessary so we scale the picture as little as
+        // possible.
+        if (image.getHeight() > image.getWidth()) {
+            int temp = widthLimit;
+            widthLimit = heightLimit;
+            heightLimit = temp;
         }
+
+        // Check if we're already within the limits - in which case we don't need to resize
+        if (getMediaSize() <= byteLimit &&
+                image.getWidth() <= widthLimit &&
+                image.getHeight() <= heightLimit &&
+                SUPPORTED_MMS_IMAGE_CONTENT_TYPES.contains(image.getContentType())) {
+            return;
+        }
+
         PduPart part = image.getResizedImageAsPart(
-                MmsConfig.getMaxImageWidth(),
-                MmsConfig.getMaxImageHeight(),
+                widthLimit,
+                heightLimit,
                 byteLimit);
 
         if (part == null) {
             throw new ExceedMessageSizeException("Not enough memory to turn image into part: " +
                     getUri());
         }
+
+        // Update the content type because it may have changed due to resizing/recompressing
+        mContentType = new String(part.getContentType());
 
         String src = getSrc();
         byte[] srcBytes = src.getBytes();

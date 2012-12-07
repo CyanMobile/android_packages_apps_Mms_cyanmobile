@@ -559,14 +559,18 @@ public class MessageUtils {
         context.startActivity(intent);
     }
 
-    public static void showErrorDialog(Context context,
+    public static void showErrorDialog(Activity activity,
             String title, String message) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        if (activity.isFinishing()) {
+            return;	
+        }
+        AlertDialog.Builder builder = new AlertDialog.Builder(activity);
 
         builder.setIcon(R.drawable.ic_sms_mms_not_delivered);
         builder.setTitle(title);
         builder.setMessage(message);
         builder.setPositiveButton(android.R.string.ok, new OnClickListener() {
+            @Override
             public void onClick(DialogInterface dialog, int which) {
                 if (which == DialogInterface.BUTTON_POSITIVE) {
                     dialog.dismiss();
@@ -579,7 +583,7 @@ public class MessageUtils {
     /**
      * The quality parameter which is used to compress JPEG images.
      */
-    public static final int IMAGE_COMPRESSION_QUALITY = 80;
+    public static final int IMAGE_COMPRESSION_QUALITY = 95;
     /**
      * The minimum quality parameter which is used to compress JPEG images.
      */
@@ -626,6 +630,7 @@ public class MessageUtils {
         // Stash the runnable for showing it away so we can cancel
         // it later if the resize completes ahead of the deadline.
         final Runnable showProgress = new Runnable() {
+            @Override
             public void run() {
                 Toast.makeText(context, R.string.compressing, Toast.LENGTH_SHORT).show();
             }
@@ -634,13 +639,25 @@ public class MessageUtils {
         handler.postDelayed(showProgress, 1000);
 
         new Thread(new Runnable() {
+            @Override
             public void run() {
                 final PduPart part;
                 try {
                     UriImage image = new UriImage(context, imageUri);
+                    int widthLimit = MmsConfig.getMaxImageWidth();
+                    int heightLimit = MmsConfig.getMaxImageHeight();
+                    // In mms_config.xml, the max width has always been declared larger than the max
+                    // height. Swap the width and height limits if necessary so we scale the picture
+                    // as little as possible.
+                    if (image.getHeight() > image.getWidth()) {
+                        int temp = widthLimit;
+                        widthLimit = heightLimit;
+                        heightLimit = temp;
+                    }
+
                     part = image.getResizedImageAsPart(
-                        MmsConfig.getMaxImageWidth(),
-                        MmsConfig.getMaxImageHeight(),
+                        widthLimit,
+                        heightLimit,
                         MmsConfig.getMaxMessageSize() - MESSAGE_OVERHEAD);
                 } finally {
                     // Cancel pending show of the progress toast if necessary.
@@ -648,6 +665,7 @@ public class MessageUtils {
                 }
 
                 handler.post(new Runnable() {
+                    @Override
                     public void run() {
                         cb.onResizeResult(part, append);
                     }
@@ -728,6 +746,7 @@ public class MessageUtils {
         }
 
         OnClickListener positiveListener = new OnClickListener() {
+            @Override
             public void onClick(DialogInterface dialog, int which) {
                 for (final Map.Entry<String, String> entry : map.entrySet()) {
                     MmsMessageSender.sendReadRec(context, entry.getValue(),
@@ -742,6 +761,7 @@ public class MessageUtils {
         };
 
         OnClickListener negativeListener = new OnClickListener() {
+            @Override
             public void onClick(DialogInterface dialog, int which) {
                 if (callback != null) {
                     callback.run();
@@ -751,6 +771,7 @@ public class MessageUtils {
         };
 
         OnCancelListener cancelListener = new OnCancelListener() {
+            @Override
             public void onCancel(DialogInterface dialog) {
                 if (callback != null) {
                     callback.run();
