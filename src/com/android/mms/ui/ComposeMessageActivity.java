@@ -225,6 +225,8 @@ public class ComposeMessageActivity extends Activity
     public static final int REQUEST_CODE_CREATE_SLIDESHOW = 17;
     public static final int REQUEST_CODE_ECM_EXIT_DIALOG  = 18;
     public static final int REQUEST_CODE_ADD_CONTACT      = 19;
+    public static final int REQUEST_PICK_CONTACT          = 20;
+    public static final int REQUEST_CODE_INSERT_CONTACT_INFO = 21;
 
     private static final String TAG = "Mms/compose";
 
@@ -246,6 +248,7 @@ public class ComposeMessageActivity extends Activity
     private static final int MENU_ADD_TO_CONTACTS       = 13;
 
     private static final int MENU_EDIT_MESSAGE          = 14;
+    private static final int MENU_INSERT_CONTACT_INFO   = 15;
     private static final int MENU_VIEW_SLIDESHOW        = 16;
     private static final int MENU_VIEW_MESSAGE_DETAILS  = 17;
     private static final int MENU_DELETE_MESSAGE        = 18;
@@ -281,7 +284,6 @@ public class ComposeMessageActivity extends Activity
     private static final int DIALOG_TEMPLATE_SELECT = 0;
     private static final int DIALOG_TEMPLATE_NOT_AVAILABLE = 1;
 
-    private static final int PICK_CONTACT_REQUEST = 1;
     private final ContactAccessor mContactAccessor = ContactAccessor.getInstance();
 
     private ContentResolver mContentResolver;
@@ -2742,6 +2744,9 @@ public class ComposeMessageActivity extends Activity
                 R.drawable.ic_menu_sbm_emoji);
 	}
 
+        menu.add(0, MENU_INSERT_CONTACT_INFO, 0, R.string.menu_insert_contact)
+            .setIcon(R.drawable.ic_menu_contact);
+
         if (mMsgListAdapter.getCount() > 0) {
             // Removed search as part of b/1205708
             //menu.add(0, MENU_SEARCH, 0, R.string.menu_search).setIcon(
@@ -2820,6 +2825,10 @@ public class ComposeMessageActivity extends Activity
             case MENU_INSERT_EMOJI:
 		showEmojiDialog();
 		break;
+            case MENU_INSERT_CONTACT_INFO:
+                Intent intentInsertContactInfo = new Intent(Intent.ACTION_PICK,
+                        Contacts.CONTENT_URI);
+                startActivityForResult(intentInsertContactInfo, REQUEST_CODE_INSERT_CONTACT_INFO);
             case MENU_VIEW_CONTACT: {
                 // View the contact for the first (and only) recipient.
                 ContactList list = getRecipients();
@@ -3058,10 +3067,12 @@ public class ComposeMessageActivity extends Activity
                 }
                 break;
 
-            case PICK_CONTACT_REQUEST:
-                if (resultCode == RESULT_OK) {
-                    loadContactInfo(data.getData());
-                }
+            case REQUEST_PICK_CONTACT:
+                loadContactInfo(data.getData());
+                break;
+
+            case REQUEST_CODE_INSERT_CONTACT_INFO:
+                showInsertContactInfoDialog(data.getData());
                 break;
             default:
                 // TODO
@@ -3122,6 +3133,124 @@ public class ComposeMessageActivity extends Activity
                 dialog.dismiss();
             }
         });
+        builder.show();
+    }
+
+    private CharSequence[] getContactInfoData(long contactId) {
+        final String[] projection = new String[] {
+            Data.DATA1, Data.DATA2, Data.DATA3, Data.MIMETYPE
+        };
+        final String where = Data.CONTACT_ID + "=? AND ("
+                        + Data.MIMETYPE + "=? OR "
+                        + Data.MIMETYPE + "=? OR "
+                        + Data.MIMETYPE + "=? OR "
+                        + Data.MIMETYPE + "=?)";
+        final String[] whereArgs = new String[] {
+            String.valueOf(contactId),
+            CommonDataKinds.Phone.CONTENT_ITEM_TYPE,
+            CommonDataKinds.Email.CONTENT_ITEM_TYPE,
+            CommonDataKinds.StructuredPostal.CONTENT_ITEM_TYPE,
+            CommonDataKinds.Website.CONTENT_ITEM_TYPE
+        };
+
+        final Cursor cursor = getContentResolver().query(Data.CONTENT_URI,
+                projection, where, whereArgs, Data.MIMETYPE);
+
+        if (cursor == null) {
+            return null;
+        }
+
+        final int count = cursor.getCount();
+        final int dataIndex = cursor.getColumnIndex(Data.DATA1);
+        final int typeIndex = cursor.getColumnIndex(Data.DATA2);
+        final int labelIndex = cursor.getColumnIndex(Data.DATA3);
+        final int mimeTypeIndex = cursor.getColumnIndex(Data.MIMETYPE);
+
+        if (count == 0) {
+            cursor.close();
+            return null;
+        }
+
+        final CharSequence[] entries = new CharSequence[count];
+
+        for (int i = 0; i < count; i++) {
+            cursor.moveToPosition(i);
+
+            String data = cursor.getString(dataIndex);
+            int type = cursor.getInt(typeIndex);
+            String label = cursor.getString(labelIndex);
+            String mimeType = cursor.getString(mimeTypeIndex);
+
+            if (mimeType.equals(Phone.CONTENT_ITEM_TYPE)) {
+                entries[i] = Phone.getTypeLabel(getResources(), type, label) + ": " + data;
+            } else if (mimeType.equals(Email.CONTENT_ITEM_TYPE)) {
+                entries[i] = Email.getTypeLabel(getResources(), type, label) + ": " + data;
+            } else if (mimeType.equals(StructuredPostal.CONTENT_ITEM_TYPE)) {
+                entries[i] = StructuredPostal.getTypeLabel(getResources(), type, label)
+                        + ": " + data;
+            } else {
+                entries[i] = data;
+            }
+        }
+
+        cursor.close();
+
+        return entries;
+    }
+
+    private void showInsertContactInfoDialog(Uri contactUri) {
+        long contactId = -1;
+        String displayName = null;
+
+        final String[] projection = new String[] {
+            Contacts._ID, Contacts.DISPLAY_NAME
+        };
+        final Cursor cursor = getContentResolver().query(contactUri,
+                projection, null, null, null);
+        if (cursor != null) {
+            if (cursor.moveToFirst()) {
+                contactId = cursor.getLong(0);
+                displayName = cursor.getString(1);
+            }
+            cursor.close();
+        }
+
+        final CharSequence[] entries = (contactId >= 0) ? getContactInfoData(contactId) : null;
+
+        if (contactId < 0 || entries == null) {
+            Toast.makeText(this, R.string.cannot_find_contacts, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        final boolean[] itemsChecked = new boolean[entries.length];
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setIcon(R.drawable.ic_contact_picture);
+        builder.setTitle(displayName);
+
+        builder.setMultiChoiceItems(entries, null, new DialogInterface.OnMultiChoiceClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which, boolean isChecked) {
+                itemsChecked[which] = isChecked;
+            }
+        });
+
+        builder.setPositiveButton(R.string.insert_contact_info_positive_button,
+                new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                for (int i = 0; i < entries.length; i++) {
+                    if (itemsChecked[i]) {
+                        int start = mTextEditor.getSelectionStart();
+                        int end = mTextEditor.getSelectionEnd();
+                        mTextEditor.getText().replace(
+                                Math.min(start, end), Math.max(start, end), entries[i] + "\n");
+                    }
+                }
+            }
+        });
+        builder.setNegativeButton(android.R.string.cancel, null);
+
         builder.show();
     }
 
@@ -4157,7 +4286,7 @@ public class ComposeMessageActivity extends Activity
     }
 
     protected void pickContact() {
-        startActivityForResult(mContactAccessor.getPickContactIntent(), PICK_CONTACT_REQUEST);
+        startActivityForResult(mContactAccessor.getPickContactIntent(), REQUEST_PICK_CONTACT);
     }
 
     private void loadContactInfo(Uri contactUri) {
