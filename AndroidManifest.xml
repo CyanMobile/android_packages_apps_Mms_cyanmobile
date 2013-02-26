@@ -303,7 +303,7 @@
         </activity>
 
         <activity android:name=".ui.QuickReader"
-            android:theme="@android:style/Theme.Dialog"
+            android:theme="@style/QuickDialogTheme"
             android:excludeFromRecents="true" >
         </activity>
 

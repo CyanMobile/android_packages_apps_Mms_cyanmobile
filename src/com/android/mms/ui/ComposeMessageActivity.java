@@ -171,8 +171,8 @@ import com.android.mms.ui.MessageUtils.ResizeImageResultCallback;
 import com.android.mms.ui.MessagingPreferenceActivity;
 import com.android.mms.ui.RecipientsEditor.RecipientContextMenuInfo;
 import com.android.mms.util.SendingProgressTokenManager;
-import com.android.mms.util.SmileyParser;
-import com.android.mms.util.EmojiParser;
+import com.android.internal.util.SmileyParser;
+import com.android.internal.util.EmojiParser;
 
 import android.text.InputFilter.LengthFilter;
 
@@ -1956,6 +1956,9 @@ public class ComposeMessageActivity extends Activity
 
         boolean showGesture = prefs.getBoolean(MessagingPreferenceActivity.SHOW_GESTURE, false);
         boolean stripUnicode = prefs.getBoolean(MessagingPreferenceActivity.STRIP_UNICODE, false);
+
+        SmileyParser.init(this);
+        EmojiParser.init(this);
 
         int layout = R.layout.compose_message_activity;
 
