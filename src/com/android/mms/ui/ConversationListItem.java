@@ -37,6 +37,7 @@ import android.text.SpannableStringBuilder;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.StyleSpan;
 import android.text.style.TextAppearanceSpan;
+import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
@@ -45,6 +46,9 @@ import android.widget.QuickContactBadge;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+
+import com.android.internal.util.EmojiParser;
+import com.android.internal.util.SmileyParser;
 
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
@@ -85,6 +89,8 @@ public class ConversationListItem extends RelativeLayout implements Contact.Upda
         if (sDefaultContactImage == null) {
             sDefaultContactImage = context.getResources().getDrawable(R.drawable.ic_contact_picture);
         }
+        SmileyParser.init(context);
+        EmojiParser.init(context);
     }
 
     @Override
@@ -125,7 +131,22 @@ public class ConversationListItem extends RelativeLayout implements Contact.Upda
      */
     public void bind(String title, String explain) {
         mFromView.setText(title);
-        mSubjectView.setText(explain);
+        mSubjectView.setText(replaceWithEmotes(explain));
+    }
+
+    private CharSequence replaceWithEmotes(String body) {
+        SpannableStringBuilder buf = new SpannableStringBuilder();
+
+        if (!TextUtils.isEmpty(body)) {
+            SmileyParser parser = SmileyParser.getInstance();
+            CharSequence smileyBody = parser.addSmileySpans(body);
+            if (PreferenceManager.getDefaultSharedPreferences(getContext()).getBoolean(MessagingPreferenceActivity.ENABLE_EMOJIS, false)) {
+                EmojiParser emojiParser = EmojiParser.getInstance();
+                smileyBody = emojiParser.addEmojiSpans(smileyBody);
+            }
+            buf.append(smileyBody);
+        }
+        return buf;
     }
 
     private CharSequence formatMessage(ConversationListItemData ch) {
@@ -250,7 +271,7 @@ public class ConversationListItem extends RelativeLayout implements Contact.Upda
         setPresenceIcon(contacts.getPresenceResId());
 
         // Subject
-        mSubjectView.setText(ch.getSubject());
+        mSubjectView.setText(replaceWithEmotes(ch.getSubject()));
         LayoutParams subjectLayout = (LayoutParams)mSubjectView.getLayoutParams();
         // We have to make the subject left of whatever optional items are shown on the right.
         subjectLayout.addRule(RelativeLayout.LEFT_OF, hasAttachment ? R.id.attachment :

@@ -79,8 +79,8 @@ import com.android.mms.transaction.Transaction;
 import com.android.mms.transaction.TransactionBundle;
 import com.android.mms.transaction.TransactionService;
 import com.android.mms.util.DownloadManager;
-import com.android.mms.util.SmileyParser;
-import com.android.mms.util.EmojiParser;
+import com.android.internal.util.EmojiParser;
+import com.android.internal.util.SmileyParser;
 
 import com.google.android.mms.ContentType;
 import com.google.android.mms.pdu.PduHeaders;
@@ -192,6 +192,8 @@ public class MessageListItem extends LinearLayout implements
 
         int color = mContext.getResources().getColor(R.color.timestamp_color);
         mColorSpan = new ForegroundColorSpan(color);
+        SmileyParser.init(mContext);
+        EmojiParser.init(mContext);
     }
 
     public MessageItem getMessageItem() {

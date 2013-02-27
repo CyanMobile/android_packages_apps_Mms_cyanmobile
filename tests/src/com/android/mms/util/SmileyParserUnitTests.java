@@ -24,6 +24,7 @@ import android.test.AndroidTestCase;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.text.SpannableStringBuilder;
 import android.text.style.ImageSpan;
+import com.android.internal.util.SmileyParser;
 
 import com.android.internal.widget.Smileys;
 
