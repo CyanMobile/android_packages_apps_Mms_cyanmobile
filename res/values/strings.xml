@@ -931,6 +931,9 @@
     <string name="quick_reader">Mark as read success!</string>
     <string name="menu_add_to_calendar">Add to calendar</string>
 
+    <string name="add_recipients">Add recipients</string>
+    <string name="add_recipients_positive_button">Add</string>
+
     <!-- Displayed at the end of the conversation list in the widget. Tapping on this will open the default conversation list. [CHAR LIMIT=35] -->
     <string name="view_more_conversations">View more conversations</string>
     <string name="loading_conversations">Load conversations</string>
