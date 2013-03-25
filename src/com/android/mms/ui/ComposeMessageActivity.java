@@ -147,6 +147,7 @@ import android.widget.Toast;
 
 import com.android.internal.telephony.TelephonyIntents;
 import com.android.internal.telephony.TelephonyProperties;
+import com.android.internal.util.CharSequences;
 import com.android.mms.LogTag;
 import com.android.mms.MmsConfig;
 import com.android.mms.R;
@@ -225,8 +226,7 @@ public class ComposeMessageActivity extends Activity
     public static final int REQUEST_CODE_CREATE_SLIDESHOW = 17;
     public static final int REQUEST_CODE_ECM_EXIT_DIALOG  = 18;
     public static final int REQUEST_CODE_ADD_CONTACT      = 19;
-    public static final int REQUEST_PICK_CONTACT          = 20;
-    public static final int REQUEST_CODE_INSERT_CONTACT_INFO = 21;
+    public static final int REQUEST_CODE_INSERT_CONTACT_INFO = 20;
 
     private static final String TAG = "Mms/compose";
 
@@ -286,8 +286,6 @@ public class ComposeMessageActivity extends Activity
 
     private static final int DIALOG_TEMPLATE_SELECT = 0;
     private static final int DIALOG_TEMPLATE_NOT_AVAILABLE = 1;
-
-    private final ContactAccessor mContactAccessor = ContactAccessor.getInstance();
 
     private ContentResolver mContentResolver;
 
@@ -3074,10 +3072,6 @@ public class ComposeMessageActivity extends Activity
                 }
                 break;
 
-            case REQUEST_PICK_CONTACT:
-                loadContactInfo(data.getData());
-                break;
-
             case REQUEST_CODE_INSERT_CONTACT_INFO:
                 showInsertContactInfoDialog(data.getData());
                 break;
@@ -4292,31 +4286,80 @@ public class ComposeMessageActivity extends Activity
         });
     }
 
-    protected void pickContact() {
-        startActivityForResult(mContactAccessor.getPickContactIntent(), REQUEST_PICK_CONTACT);
-    }
-
-    private void loadContactInfo(Uri contactUri) {
-        AsyncTask<Uri, Void, ContactInfo> task = new AsyncTask<Uri, Void, ContactInfo>() {
-
-            @Override
-            protected ContactInfo doInBackground(Uri... uris) {
-                return mContactAccessor.loadContact(getContentResolver(), uris[0]);
-            }
-
-            @Override
-            protected void onPostExecute(ContactInfo result) {
-                bindView(result);
-            }
+    private ArrayList<CharSequence[]> getContactsNumbersInfo() {
+        final String[] projection = new String[] {
+                Phone.NUMBER,
+                Phone.TYPE,
+                Phone.LABEL,
+                Phone.DISPLAY_NAME,
+                Phone.IS_PRIMARY
         };
-
-        task.execute(contactUri);
+        final String where = Phone.NUMBER + " NOT NULL";
+        final String orderBy = Phone.DISPLAY_NAME + ", "
+              + "CASE WHEN " + Phone.IS_PRIMARY + " = 0 THEN 1 ELSE 0 END";
+        final Cursor cursor = getContentResolver().query(Phone.CONTENT_URI,
+                projection, where, null, orderBy);
+        if (cursor == null) {
+            return null;
+        }
+        final int count = cursor.getCount();
+        if (count == 0) {
+            cursor.close();
+            return null;
+        }
+        final ArrayList<CharSequence[]> items = new ArrayList<CharSequence[]>(count);
+        for (int i = 0; i < count; i++) {
+            cursor.moveToPosition(i);
+            String number = cursor.getString(0);
+            int type = cursor.getInt(1);
+            String label = cursor.getString(2);
+            String name = cursor.getString(3);
+            items.add(i, new CharSequence[] {name, Phone.getTypeLabel(getResources(), type, label), number});
+        }
+        cursor.close();
+        return items;
     }
 
-    protected void bindView(ContactInfo contactInfo) {
-        Intent intent = new Intent(Intent.ACTION_SENDTO,
-                Uri.fromParts("sms", contactInfo.getPhoneNumber(), null));
-        this.startActivity(intent);
+    private void pickContact() {
+        final int displayNameColumn = 0;
+        final int labelColumn = 1;
+        final int numberColumn = 2;
+        final ArrayList<CharSequence[]> data = getContactsNumbersInfo();
+        if (data == null) {
+            return;
+        }
+        final int count = data.size();
+        final CharSequence[] entries = new CharSequence[count];
+        for (int i = 0; i < count; i++) {
+            entries[i] = data.get(i)[displayNameColumn] + " - " + data.get(i)[labelColumn]
+                    + "\n" + data.get(i)[numberColumn];
+        }
+        final boolean[] numbersChecked = new boolean[entries.length];
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setIcon(R.drawable.ic_contact_picture);
+        builder.setTitle(R.string.add_recipients);
+        builder.setMultiChoiceItems(entries, null, new DialogInterface.OnMultiChoiceClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which, boolean isChecked) {
+                numbersChecked[which] = isChecked;
+            }
+        });
+        builder.setPositiveButton(R.string.add_recipients_positive_button,
+                new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                for (int i = 0; i < count; i++) {
+                    if (numbersChecked[i]) {
+                        int start = mRecipientsEditor.getSelectionStart();
+                        int end = mRecipientsEditor.getSelectionEnd();
+                        mRecipientsEditor.getText().replace(
+                                Math.min(start, end), Math.max(start, end), data.get(i)[numberColumn] + ",");
+                    }
+                }
+            }
+        });
+        builder.setNegativeButton(android.R.string.cancel, null);
+        builder.show();
     }
 
     private void addRecipientsListeners() {
