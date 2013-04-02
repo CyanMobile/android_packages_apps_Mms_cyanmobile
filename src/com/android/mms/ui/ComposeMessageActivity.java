@@ -305,7 +305,6 @@ public class ComposeMessageActivity extends Activity
     private EditText mTextEditor;           // Text editor to type your message into
     private TextView mTextCounter;          // Shows the number of characters used in text editor
     private Button mSendButton;             // Press to detonate
-    private Button mAttachButton;           // Press to detonate
     private Button mContactsButton;         // Press to detonate
     private EditText mSubjectTextEditor;    // Text editor for MMS subject
 
@@ -3519,8 +3518,6 @@ public class ComposeMessageActivity extends Activity
     public void onClick(View v) {
         if ((v == mSendButton) && isPreparedForSending()) {
             confirmSendMessageIfNeeded();
-        } else if (v == mAttachButton) {
-            showAddAttachmentDialog(false);
         } else if (v == mContactsButton) {
             pickContact();
         }
@@ -3628,8 +3625,6 @@ public class ComposeMessageActivity extends Activity
         mTextCounter = (TextView) findViewById(R.id.text_counter);
         mSendButton = (Button) findViewById(R.id.send_button);
         mSendButton.setOnClickListener(this);
-        mAttachButton = (Button) findViewById(R.id.attach_button);
-        mAttachButton.setOnClickListener(this);
         mContactsButton = (Button) findViewById(R.id.contacts_button);
         mContactsButton.setOnClickListener(this);
         mTopPanel = findViewById(R.id.recipients_subject_linear);

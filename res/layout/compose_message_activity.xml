@@ -189,17 +189,6 @@
                         android:text="@string/send"
                     />
 
-                    <Button
-                        android:id="@+id/attach_button"
-                        android:layout_marginLeft="5dip"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1.0"
-                        style="?android:attr/buttonStyle"
-                        android:nextFocusLeft="@+id/embedded_text_editor"
-                        android:text="@string/add_attachment"
-                    />
-
                     <TextView
                         android:id="@+id/text_counter"
                         android:layout_width="match_parent"
